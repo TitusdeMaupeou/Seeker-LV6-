@@ -1,7 +1,10 @@
 var SerialPort = require('serialport');
 var Readline = SerialPort.parsers.Readline
-var fs = require('fs');
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 
+//change port back to /dev/cu.usbmodem143242
 //------ SETTINGS ---------------------------------
 const settings = {
     serialAddress: 'COM4',
@@ -16,12 +19,10 @@ const serialPort = new SerialPort(settings.serialAddress, {
       return console.log('Error: ', err.message);
     }
 });    
+
 const parser = new Readline();
 
 const crew = {};
-
-
-//------ SERIAL ---------------------------------
 
 
 //------ crew ---------------------------------
@@ -37,35 +38,27 @@ function updateCrewData(t, s, property, value) {
     }   
 }
 
-//--------socket_______________
-
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+//-------- serial + socket_______________
 
 app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html');
+  res.sendFile(__dirname + '/index.html'); //serve index.html
 });
 
-io.on('connection', function(socket){
+io.on('connection', function(socket){ //connection socket
    serialPort.pipe(parser)
    parser.on('data', function (data) {
     if (data != null || data != "" || data != undefined) {
         try {
             console.log(data);
             let parsed = JSON.parse(data);
-            updateCrewData(parsed.t,parsed.s, parsed.n, parsed.v);
-            io.emit('update', data);
+            updateCrewData(parsed.t,parsed.s, parsed.n, parsed.v); //time, id, property and its value (e.g temperature)
+            io.emit('update', data); //send crewdata to socket
         } catch (error) {
             console.log(error);
         }
     }
 });
 
-});
-
-http.listen(3000, function(){
-  console.log('listening on *:3000');
 });
 
 
