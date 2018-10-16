@@ -1,3 +1,3 @@
 # Seeker-LV6-
 
-Bevat geen node_modules file.
+Bevatte vreemd genoeg geen package.json. Gebruikte packages : express, http, io, serialport.
